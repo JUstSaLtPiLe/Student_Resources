@@ -8,6 +8,7 @@ namespace StudentResourcesAPI.Models
 {
     public class Clazz
     {
+        [Key]
         public int ClazzId { get; set; }
         public string Name { get; set; }
         public string Teacher { get; set; }

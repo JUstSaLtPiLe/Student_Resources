@@ -35,7 +35,7 @@ namespace StudentResourcesAPI.Models
             numBytesRequested: 256 / 8));
         }
         [Key]
-        public long Id { get; set; }
+        public int Id { get; set; }
         public string RollNumber { get; set; }
         [Required]
         public string Password { get; set; }
