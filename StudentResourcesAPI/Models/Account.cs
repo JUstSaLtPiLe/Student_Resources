@@ -17,6 +17,8 @@ namespace StudentResourcesAPI.Models
             this.UpdatedAt = DateTime.Now;
             this.Status = AccountStatus.Active;
             this.Salt = new byte[128 / 8];
+            this.Password = "a";
+            this.RollNumber = "a";
             using (var rng = RandomNumberGenerator.Create())
             {
                 rng.GetBytes(this.Salt);
@@ -34,8 +36,7 @@ namespace StudentResourcesAPI.Models
         }
         [Key]
         public long Id { get; set; }
-        [EmailAddress]
-        public string Email { get; set; }
+        public string RollNumber { get; set; }
         [Required]
         public string Password { get; set; }
         public byte[] Salt { get; set; }
