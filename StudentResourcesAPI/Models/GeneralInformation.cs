@@ -14,9 +14,10 @@ namespace StudentResourcesAPI.Models
         public UserGender Gender { get; set; }
         [Display(Name = "Birthday")]
         public DateTime Dob { get; set; }
-        public string RollNumber { get; set; }
         public string Phone { get; set; }
         public string Address { get; set; }
+        [EmailAddress]
+        public string Email { get; set; }
         public Account Account { get; set; }
         public enum UserGender
         {
