@@ -45,6 +45,9 @@ namespace StudentResourcesAPI.Models
         public AccountRole Role { get; set; }
         public AccountStatus Status { get; set; }
         public GeneralInformation GeneralInformation { get; set; }
+        public List<StudentClazz> StudentClazzs { get; set; }
+        public List<Grade> Grades { get; set; }
+        public List<Subject> Subjects { get; set; }
     }
     public enum AccountRole
     {
