@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace StudentResourcesAPI.Models
 {
-    public class ClassSubject
+    public class ClazzSubject
     {
         public int ClazzId { get; set; }
         public int SubjectId { get; set; }
