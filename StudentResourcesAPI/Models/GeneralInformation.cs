@@ -9,7 +9,7 @@ namespace StudentResourcesAPI.Models
     public class GeneralInformation
     {
         [Key]
-        public long AccountId { get; set; }
+        public int AccountId { get; set; }
         public string Name { get; set; }
         public UserGender Gender { get; set; }
         [Display(Name = "Birthday")]
