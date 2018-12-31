@@ -21,7 +21,7 @@ namespace StudentResourcesAPI.Migrations
 
             modelBuilder.Entity("StudentResourcesAPI.Models.Account", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("AccountId")
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
@@ -29,8 +29,6 @@ namespace StudentResourcesAPI.Migrations
 
                     b.Property<string>("Password")
                         .IsRequired();
-
-                    b.Property<int>("Role");
 
                     b.Property<string>("RollNumber");
 
@@ -40,7 +38,7 @@ namespace StudentResourcesAPI.Migrations
 
                     b.Property<DateTime>("UpdatedAt");
 
-                    b.HasKey("Id");
+                    b.HasKey("AccountId");
 
                     b.ToTable("Account");
                 });
@@ -242,7 +240,7 @@ namespace StudentResourcesAPI.Migrations
             modelBuilder.Entity("StudentResourcesAPI.Models.RoleAccount", b =>
                 {
                     b.HasOne("StudentResourcesAPI.Models.Account", "Account")
-                        .WithMany()
+                        .WithMany("RoleAccounts")
                         .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade);
 

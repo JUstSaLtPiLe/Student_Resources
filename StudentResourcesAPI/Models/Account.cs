@@ -35,24 +35,20 @@ namespace StudentResourcesAPI.Models
             numBytesRequested: 256 / 8));
         }
         [Key]
-        public int Id { get; set; }
+        public int AccountId { get; set; }
         public string RollNumber { get; set; }
         [Required]
         public string Password { get; set; }
         public byte[] Salt { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
-        public AccountRole Role { get; set; }
         public AccountStatus Status { get; set; }
         public GeneralInformation GeneralInformation { get; set; }
         public List<StudentClazz> StudentClazzs { get; set; }
         public List<Grade> Grades { get; set; }
         public List<Subject> Subjects { get; set; }
-    }
-    public enum AccountRole
-    {
-        Student = 1,
-        Employee = 2
+        public List<RoleAccount> RoleAccounts { get; set; }
+
     }
 
     public enum AccountStatus
