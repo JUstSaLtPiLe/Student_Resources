@@ -1,0 +1,68 @@
+﻿@model StudentResourcesAPI.Models.Account
+
+@{
+    ViewData["Title"] = "Create";
+    var roles = ViewData["roles"] as List<Role>;
+}
+
+<h2>Create</h2>
+
+<h4>Account</h4>
+<hr />
+<div class="row">
+    <form asp-action="Create">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <fieldset>
+            <legend>Personal information</legend>
+            <div class="form-group">
+                <label asp-for="GeneralInformation.Name" class="control-label"></label>
+                <input asp-for="GeneralInformation.Name" class="form-control" />
+                <span asp-validation-for="GeneralInformation.Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="GeneralInformation.Gender" class="control-label"></label>
+                <label class="radio-inline"><input asp-for="GeneralInformation.Gender" type="radio" value="0">Female</label>
+                <label class="radio-inline"><input asp-for="GeneralInformation.Gender" type="radio" value="1">Male</label>
+                <label class="radio-inline"><input asp-for="GeneralInformation.Gender" type="radio" value="2">Other</label>
+            </div>
+            <div class="form-group">
+                <label asp-for="GeneralInformation.Dob" class="control-label"></label>
+                <input asp-for="GeneralInformation.Dob" class="form-control" type="date" />
+                <span asp-validation-for="GeneralInformation.Dob" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="GeneralInformation.Phone" class="control-label"></label>
+                <input asp-for="GeneralInformation.Phone" class="form-control" />
+                <span asp-validation-for="GeneralInformation.Phone" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="GeneralInformation.Email" class="control-label"></label>
+                <input asp-for="GeneralInformation.Email" class="form-control" />
+                <span asp-validation-for="GeneralInformation.Email" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="GeneralInformation.Address" class="control-label"></label>
+                <input asp-for="GeneralInformation.Address" class="form-control" />
+                <span asp-validation-for="GeneralInformation.Address" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="RoleAccounts" class="control-label">Role</label>
+                @foreach (var r in roles)
+                {
+                    <label class="radio-inline"><input type="checkbox" name="roleIds[]" value="@r.RoleId"> @r.Name </label>
+                }
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-default" />
+                <input type="reset" value="Reset" class="btn btn-default" />
+            </div>
+        </fieldset>
+    </form>
+</div>
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
