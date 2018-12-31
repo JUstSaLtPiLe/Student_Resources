@@ -27,8 +27,8 @@ namespace StudentResourcesAPI.Data
             modelBuilder.Entity<RoleAccount>()
                 .HasKey(ra => new { ra.RoleId, ra.AccountId });
 
-
         }
+
         public DbSet<Account> Account { get; set; }
         public DbSet<Clazz> Clazz { get; set; }
         public DbSet<Subject> Subject { get; set; }
