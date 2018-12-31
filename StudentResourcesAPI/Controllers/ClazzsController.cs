@@ -54,7 +54,7 @@ namespace StudentResourcesAPI.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ClazzId,Name,Teacher,CreatedAt,UpdateAt,Status")] Clazz clazz)
+        public async Task<IActionResult> Create([Bind("Name,Teacher,Status")] Clazz clazz)
         {
             if (ModelState.IsValid)
             {
@@ -86,7 +86,7 @@ namespace StudentResourcesAPI.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ClazzId,Name,Teacher,CreatedAt,UpdateAt,Status")] Clazz clazz)
+        public async Task<IActionResult> Edit(int id, [Bind("Name,Teacher,Status")] Clazz clazz)
         {
             if (id != clazz.ClazzId)
             {
