@@ -32,15 +32,16 @@ namespace StudentResourcesAPI.Controllers
             {
                 return NotFound();
             }
-
-            var clazz = await _context.Clazz
-                .FirstOrDefaultAsync(m => m.ClazzId == id);
-            if (clazz == null)
+            var ListStudentClazz = _context.StudentClazz
+                .Where(sc => sc.ClazzId == id)
+                .Include(sc => sc.Account)
+                .ThenInclude(a => a.GeneralInformation)
+                .ToList();
+            if (ListStudentClazz == null)
             {
                 return NotFound();
             }
-
-            return View(clazz);
+            return View(ListStudentClazz);
         }
 
         // GET: Clazzs/Create
@@ -148,6 +149,49 @@ namespace StudentResourcesAPI.Controllers
         private bool ClazzExists(int id)
         {
             return _context.Clazz.Any(e => e.ClazzId == id);
+        }
+
+        public IActionResult AddStudents(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var clazz = _context.Clazz.Find(id);
+            if (clazz == null)
+            {
+                return NotFound();
+            }
+            var students = _context.Account
+                .Where(a => a.RoleAccounts.Any(ra => ra.RoleId == 2))
+                .Include(a => a.GeneralInformation)
+                .ToList();
+            ViewData["students"] = students;
+            return View(clazz);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveStudents(int? clazzId, int[] accountIds)
+        {
+            var clazz = _context.Clazz.Find(clazzId);
+            foreach (var id in accountIds)
+            {
+                var existedStudenClazz = _context.StudentClazz.Find(id, clazzId);
+                if(existedStudenClazz != null)
+                {
+                    continue;
+                }
+                var student = _context.Account.Find(id);
+                StudentClazz studentClazz = new StudentClazz
+                {
+                    Clazz = clazz,
+                    Account = student
+                };
+                _context.Add(studentClazz);
+            }
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
     }
 }
