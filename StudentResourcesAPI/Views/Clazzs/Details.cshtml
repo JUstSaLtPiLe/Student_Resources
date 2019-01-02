@@ -1,48 +1,67 @@
-﻿@model StudentResourcesAPI.Models.Clazz
+﻿@model IEnumerable<StudentResourcesAPI.Models.StudentClazz>
 
-@{
-    ViewData["Title"] = "Details";
-}
+    @{
+        ViewData["Title"] = "Details";
+    }
 
-<h2>Details</h2>
+    <h2>Details</h2>
 
-<div>
-    <h4>Clazz</h4>
-    <hr />
-    <dl class="dl-horizontal">
-        <dt>
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.Teacher)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Teacher)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.CreatedAt)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.CreatedAt)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.UpdateAt)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.UpdateAt)
-        </dd>
-        <dt>
-            @Html.DisplayNameFor(model => model.Status)
-        </dt>
-        <dd>
-            @Html.DisplayFor(model => model.Status)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model.ClazzId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+    <div>
+        Class : @Html.DisplayNameFor(model => model.Clazz.Name)
+        Teacher : @Html.DisplayNameFor(model => model.Clazz.Teacher)
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Account.RollNumber)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Account.GeneralInformation.Name)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Account.GeneralInformation.Phone)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Account.GeneralInformation.Address)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Account.GeneralInformation.Email)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.Status)
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Account.RollNumber)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Account.GeneralInformation.Name)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Account.GeneralInformation.Phone)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Account.GeneralInformation.Address)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Account.GeneralInformation.Email)
+                        </td>
+                        <td>
+                            <a href="/Accounts/Edit/@item.Account.AccountId">Edit</a> |
+                            <a href="/Accounts/Details/@item.Account.AccountId">Details</a> |
+                            <a href="/Accounts/Delete/@item.Account.AccountId">Delete</a> |
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div>
+        <a asp-action="Index">Back to List</a>
+    </div>

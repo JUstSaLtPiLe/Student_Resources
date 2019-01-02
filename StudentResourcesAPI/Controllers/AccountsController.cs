@@ -22,7 +22,16 @@ namespace StudentResourcesAPI.Controllers
         // GET: Accounts
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Account.Include(a => a.GeneralInformation).ToListAsync());
+            var accounts = _context.Account
+                .Include(a => a.GeneralInformation)
+                .Include(a => a.RoleAccounts)
+                .ThenInclude(ra => ra.Role)
+                .ToList();
+
+            var roleAccount = _context.RoleAccount
+                .Include(ra => ra.Role)
+                .ToList();
+            return View(accounts);
         }
 
         // GET: Accounts/Details/5
@@ -33,7 +42,12 @@ namespace StudentResourcesAPI.Controllers
                 return NotFound();
             }
 
-            var account = await _context.Account.Include(a => a.GeneralInformation)
+            var account = await _context.Account
+                .Include(a => a.GeneralInformation)
+                .Include(a => a.RoleAccounts)
+                .ThenInclude(ra => ra.Role)
+                .Include(a => a.StudentClazzs)
+                .ThenInclude(sc => sc.Clazz)
                 .FirstOrDefaultAsync(m => m.AccountId == id);
             if (account == null)
             {
@@ -91,11 +105,20 @@ namespace StudentResourcesAPI.Controllers
                 return NotFound();
             }
 
-            var account = _context.Account.Include(a => a.GeneralInformation).SingleOrDefault(a => a.AccountId == id);
+            var account = _context.Account
+                .Include(a => a.RoleAccounts)
+                .Include(a => a.GeneralInformation)
+                .Include(a => a.StudentClazzs)
+                .ThenInclude(sc => sc.Clazz)
+                .SingleOrDefault(a => a.AccountId == id);
+            var roles = _context.Role.ToList();
+            var clazzs = _context.Clazz.ToList();
             if (account == null)
             {
                 return NotFound();
             }
+            ViewData["roles"] = roles;
+            ViewData["clazzs"] = clazzs;
             return View(account);
         }
 
@@ -104,7 +127,7 @@ namespace StudentResourcesAPI.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("AccountId,RollNumber,Password,Salt,CreatedAt,UpdatedAt,Status")] Account account)
+        public async Task<IActionResult> Edit(int id, [Bind("AccountId,RollNumber,Password,Salt,CreatedAt,UpdatedAt,Status")] Account account, int[] roleIds, int[] clazzIds)
         {
             if (id != account.AccountId)
             {
@@ -115,6 +138,37 @@ namespace StudentResourcesAPI.Controllers
             {
                 try
                 {
+                    if(roleIds != null)
+                    {
+                        var OldRoleAccount = _context.RoleAccount.Where(ora => ora.AccountId == id);
+                        _context.RoleAccount.RemoveRange(OldRoleAccount);
+                    }
+                   if(clazzIds != null)
+                    {
+                        var OldStudentClazz = _context.StudentClazz.Where(osc => osc.AccountId == id);
+                        _context.StudentClazz.RemoveRange(OldStudentClazz);
+                    }
+                    foreach (var roleId in roleIds)
+                    {
+                        var role = _context.Role.Find(roleId);
+                        RoleAccount roleAccount = new RoleAccount
+                        {
+                            Role = role,
+                            Account = account
+                        };
+                        _context.Update(roleAccount);
+                    }
+                    foreach (var clazzId in clazzIds)
+                    {
+                        var clazz = _context.Clazz.Find(clazzId);
+                        StudentClazz studentClazz = new StudentClazz
+                        {
+                            Clazz = clazz,
+                            Account = account
+                        };
+                        _context.Update(studentClazz);
+                    }
+                    account.RollNumber = "B19APTECH" + account.AccountId.ToString("D4");
                     account.EncryptPassword(account.Password);
                     _context.Update(account);
                     await _context.SaveChangesAsync();
@@ -159,6 +213,10 @@ namespace StudentResourcesAPI.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var account = await _context.Account.FindAsync(id);
+            var DeleteRoleAccount = _context.RoleAccount.Where(dra => dra.AccountId == id);
+            var DeleteStudenClazz = _context.StudentClazz.Where(dtc => dtc.AccountId == id);
+            _context.RoleAccount.RemoveRange(DeleteRoleAccount);
+            _context.StudentClazz.RemoveRange(DeleteStudenClazz);
             _context.Account.Remove(account);
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
