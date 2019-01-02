@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = "Edit";
+    var roles = ViewData["roles"] as List<Role>;
+    var clazzs = ViewData["clazzs"] as List<Clazz>;
 }
 
 <h2>Edit</h2>
@@ -33,11 +35,26 @@
                 <input type="password" data-val="true" data-val-required="The Password field is required." id="Password" name="Password" class="form-control" />
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="Status" class="control-label"></label>
-                <select asp-for="Status" class="form-control"></select>
-                <span asp-validation-for="Status" class="text-danger"></span>
-            </div>
+                <div class="form-group">
+                    <label asp-for="StudentClazzs" class="control-label">Class</label>
+                    @foreach (var c in clazzs)
+                    {
+                        <label class="radio-inline">
+                            <input type="checkbox" name="clazzIds[]" value="@c.ClazzId"
+                                   @foreach (var sc in Model.StudentClazzs) { if (sc.Clazz.Name.Equals(c.Name)) { Write("checked"); } }> @c.Name
+                            </label>
+                        }
+                </div>
+                <div class="form-group">
+                    <label asp-for="RoleAccounts" class="control-label">Role</label>
+                    @foreach (var r in roles)
+                    {
+                        <label class="radio-inline">
+                            <input type="checkbox" name="roleIds[]" value="@r.RoleId"
+                                   @foreach (var ra in Model.RoleAccounts) { if (ra.Role.Name.Equals(r.Name)) { Write("checked"); } }> @r.Name
+                            </label>
+                        }
+                </div>
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-default" />
             </div>
