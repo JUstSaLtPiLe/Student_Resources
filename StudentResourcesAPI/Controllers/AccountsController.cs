@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -225,6 +227,37 @@ namespace StudentResourcesAPI.Controllers
         private bool AccountExists(int id)
         {
             return _context.Account.Any(e => e.AccountId == id);
+        }
+
+        [HttpPost]
+        public IActionResult AddGrades(Grade grade)
+        {
+            try
+            {
+                var account = _context.Account.Find(grade.AccountId);
+                var subject = _context.Subject.Find(grade.SubjectId);
+                grade.Account = account;
+                grade.Subject = subject;
+                if (grade.TheoricalGrade < 5)
+                {
+                    grade.TheoricalGradeStatus = GradeStatus.Failed;
+                }
+                if (grade.AssignmentGrade < 5)
+                {
+                    grade.AssignmentGradeStatus = GradeStatus.Failed;
+                }
+                if (grade.PraticalGrade < 5)
+                {
+                    grade.PraticalGradeStatus = GradeStatus.Failed;
+                }
+                _context.Add(grade);
+                _context.SaveChanges();
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return Conflict("Sinh vien da co diem mon hoc nay");
+            }
         }
     }
 }

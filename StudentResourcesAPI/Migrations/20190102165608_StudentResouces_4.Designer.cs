@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StudentResourcesAPI.Data;
 
 namespace StudentResourcesAPI.Migrations
 {
     [DbContext(typeof(StudentResourcesContext))]
-    partial class StudentResourcesContextModelSnapshot : ModelSnapshot
+    [Migration("20190102165608_StudentResouces_4")]
+    partial class StudentResouces_4
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -110,23 +112,15 @@ namespace StudentResourcesAPI.Migrations
 
                     b.Property<int>("SubjectId");
 
-                    b.Property<int>("AssignmentGrade");
-
-                    b.Property<int>("AssignmentGradeStatus");
-
                     b.Property<DateTime>("CreatedAt");
 
                     b.Property<string>("CreatedBy");
 
-                    b.Property<int>("PraticalGrade");
+                    b.Property<int>("GradeType");
 
-                    b.Property<int>("PraticalGradeStatus");
+                    b.Property<float>("Mark");
 
                     b.Property<int>("Status");
-
-                    b.Property<int>("TheoricalGrade");
-
-                    b.Property<int>("TheoricalGradeStatus");
 
                     b.Property<DateTime>("UpdatedAt");
 
