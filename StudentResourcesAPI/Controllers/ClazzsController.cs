@@ -37,10 +37,14 @@ namespace StudentResourcesAPI.Controllers
                 .Include(sc => sc.Account)
                 .ThenInclude(a => a.GeneralInformation)
                 .ToList();
+            var subjects = _context.Subject.ToList();
+            var grades = _context.Grade.ToList();
             if (ListStudentClazz == null)
             {
                 return NotFound();
             }
+            ViewData["subjects"] = subjects;
+            ViewData["grades"] = grades;
             return View(ListStudentClazz);
         }
 
