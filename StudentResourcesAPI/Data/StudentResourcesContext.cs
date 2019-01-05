@@ -42,6 +42,7 @@ namespace StudentResourcesAPI.Data
         public DbSet<Role> Role { get; set; }
         public DbSet<RoleAccount> RoleAccount { get; set; }
         public DbSet<GeneralInformation> GeneralInformation { get; set; }
+        public DbSet<Credential> Credential { get; set; }
     }
 
 }

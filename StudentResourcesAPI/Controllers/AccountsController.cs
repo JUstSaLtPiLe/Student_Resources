@@ -4,9 +4,11 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using StudentResourcesAPI.Data;
 using StudentResourcesAPI.Models;
 
@@ -28,10 +30,6 @@ namespace StudentResourcesAPI.Controllers
                 .Include(a => a.GeneralInformation)
                 .Include(a => a.RoleAccounts)
                 .ThenInclude(ra => ra.Role)
-                .ToList();
-
-            var roleAccount = _context.RoleAccount
-                .Include(ra => ra.Role)
                 .ToList();
             return View(accounts);
         }
@@ -230,14 +228,12 @@ namespace StudentResourcesAPI.Controllers
         }
 
         [HttpPost]
-        public IActionResult AddGrades(Grade grade)
+        public IActionResult AddGrades([FromBody]IEnumerable<Grade> grades)
         {
-            try
+            foreach (var grade in grades)
             {
-                var account = _context.Account.Find(grade.AccountId);
-                var subject = _context.Subject.Find(grade.SubjectId);
-                grade.Account = account;
-                grade.Subject = subject;
+                grade.AccountId = grade.AccountId;
+                grade.SubjectId = grade.SubjectId;
                 if (grade.TheoricalGrade < 5)
                 {
                     grade.TheoricalGradeStatus = GradeStatus.Failed;
@@ -251,13 +247,53 @@ namespace StudentResourcesAPI.Controllers
                     grade.PraticalGradeStatus = GradeStatus.Failed;
                 }
                 _context.Add(grade);
-                _context.SaveChanges();
-                return Ok();
             }
-            catch (Exception e)
+            _context.SaveChanges();
+            return Ok();
+        }
+
+        public IActionResult Login()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult Login(Account account)
+        {
+            var existAccount = _context.Account
+                .Include(a => a.GeneralInformation)
+                .SingleOrDefault(a => a.RollNumber == account.RollNumber);
+            if (existAccount != null)
             {
-                return Conflict("Sinh vien da co diem mon hoc nay");
+                var roleAccounts = _context.RoleAccount
+                    .Include(ra => ra.Role)
+                    .Where(ra => ra.AccountId == existAccount.AccountId);
+                account.Salt = existAccount.Salt;
+                account.EncryptPassword(account.Password);
+                var roles = "";
+                if (existAccount.Password == account.Password)
+                {
+                    foreach (var ra in roleAccounts)
+                    {
+                        roles += ra.Role.Name + "#";
+                    }
+                    var credential = _context.Credential.SingleOrDefault(cr => cr.OwnerId == existAccount.AccountId);
+                    if(credential == null)
+                    {
+                        credential = new Credential(existAccount.AccountId);
+                        _context.Credential.Add(credential);
+                        _context.SaveChanges();
+                    }
+                    Response.StatusCode = 200;
+                    var result = new { credential, roles, existAccount.GeneralInformation.Name };
+                    return new JsonResult(result);
+                }
+                else
+                {
+                    return Unauthorized();
+                }
             }
+            return NoContent();
         }
     }
 }

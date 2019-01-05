@@ -20,13 +20,18 @@ namespace StudentResourcesAPI.Controllers
         }
 
         // GET: Clazzs
-        public async Task<IActionResult> Index()
+        public IActionResult Index([FromHeader] string Authorization)
         {
-            return View(await _context.Clazz.ToListAsync());
+            if (CheckPermission(Authorization))
+            {
+                var clazzs = _context.Clazz.ToList();
+                return new JsonResult(clazzs);
+            }
+            return Unauthorized();
         }
 
         // GET: Clazzs/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public IActionResult Details(int? id)
         {
             if (id == null)
             {
@@ -58,16 +63,15 @@ namespace StudentResourcesAPI.Controllers
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Name,Teacher,Status")] Clazz clazz)
+        public IActionResult Create([FromBody]Clazz clazz, [FromHeader] string Authorization, [FromHeader] string Role)
         {
-            if (ModelState.IsValid)
+            if (CheckToken(Authorization) == true && CheckPermission(Role) == true)
             {
                 _context.Add(clazz);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                _context.SaveChanges();
+                return Ok();
             }
-            return View(clazz);
+            return Unauthorized();
         }
 
         // GET: Clazzs/Edit/5
@@ -118,7 +122,8 @@ namespace StudentResourcesAPI.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(clazz);
+            //return View(clazz);
+            return Ok();
         }
 
         // GET: Clazzs/Delete/5
@@ -196,6 +201,25 @@ namespace StudentResourcesAPI.Controllers
             }
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
+        }
+
+        public bool CheckToken(string accessToken)
+        {
+            var credential = _context.Credential.SingleOrDefault(t => t.AccessToken == accessToken);
+            if (credential != null && credential.IsValid())
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public bool CheckPermission(string role)
+        {
+            if (role.Split("#").Contains("Employee"))
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

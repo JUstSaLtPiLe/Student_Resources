@@ -36,6 +36,21 @@
             </tr>
         </thead>
         <tbody>
+            <div class="form-group">
+                <label>Subjects</label>
+                <select class="form-control" name="SubjectId" id="chooseSubject">
+                    <option value="" disabled selected>Select Subject</option>
+                    @foreach (var sj in subjects)
+                    {
+                        <option value="@sj.SubjectId">@sj.Name</option>
+                    }
+                </select>
+            </div>
+            <tr>
+                <div class="form-group">
+                    <input type="button" value="Save" class="btn btn-default btnSubmit" />
+                </div>
+            </tr>
             @foreach (var item in Model)
             {
                 <tr>
@@ -60,29 +75,17 @@
                         <a href="/Accounts/Delete/@item.Account.AccountId">Delete</a> |
                         <a class="addGrade">Add Grade</a>
                     </td>
-                    <td class="hidden gradeForm">
-                        <form class="gradeForm" action="/Accounts/AddGrades" method="post">
-                            <div class="form-group">
-                                <input type="hidden" name="AccountId" value="@item.Account.AccountId"/>
-                                <label>Subjects</label>
-                                <select class="form-control" name="SubjectId">
-                                    <option value="" disabled selected>Select Subject</option>
-                                    @foreach (var sj in subjects)
-                                    {
-                                        <option value="@sj.SubjectId">@sj.Name</option>
-                                    }
-                                </select>
-                            </div>
+                    <td class="gradeForms">
+                        <form class="gradeForm">
+                            <input type="hidden" name="AccountId" value="@item.Account.AccountId"/>
+                            <input type="hidden" name="SubjectId" class="subjectId" />
                             @foreach (var g in Enum.GetValues(typeof(GradeType)))
                             {
                                 <div class="form-group">
                                     <label> @g </label>
-                                    <input class="form-control" type="number" name="@g"/>
+                                    <input class="form-control" type="number" name="@g" />
                                 </div>
                             }
-                            <div class="form-group">
-                                <input type="button" value="Save" class="btn btn-default btnSubmit" />
-                            </div>
                         </form>
                     </td>
                 </tr>
@@ -97,14 +100,34 @@
             $(this).closest("td").next().removeClass("hidden");
             $(this).addClass("hidden");
         }); 
-        $(".btnSubmit").click(function (){
-            var formData = $(this).closest($(".gradeForm")).serializeArray();
+
+
+        $(".btnSubmit").click(function () {
+            $(".subjectId").each(function () {
+                $(this).val($("#chooseSubject").val());
+            });
+            var grades = [];
+            $(".gradeForm").each(function () {
+                var formData = {
+                    'AccountId': $(this).find('input[name="AccountId"]').val(),
+                    'SubjectId': $(this).find('input[name="SubjectId"]').val(),
+                    'AssignmentGrade': $(this).find('input[name="AssignmentGrade"]').val(),
+                    'PraticalGrade': $(this).find('input[name="PraticalGrade"]').val(),
+                    'TheoricalGrade': $(this).find('input[name="TheoricalGrade"]').val(),
+                };
+                grades.push(formData);
+            });
+            grades = JSON.stringify(grades);
+            console.log(grades);
             $.ajax({
+                accepts: 'application/json',
+                contentType: 'application/json',
                 type: 'POST',
                 url: '/Accounts/AddGrades',
-                data: formData,
-                success: function () {
+                data: grades,
+                success: function (result) {
                     alert("success");
+                    console.log(result);
                 },
                 error: function (xhr, textStatus, errorThrown) {
                     if (xhr.status == 409) {
@@ -112,8 +135,6 @@
                     }                 
                 }
             });
-            $(this).closest("td").addClass("hidden");
-            $(this).closest("td").prev().find(".addGrade").removeClass("hidden");
         });
     });
 </script>

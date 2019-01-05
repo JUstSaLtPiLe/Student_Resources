@@ -23,16 +23,11 @@ namespace StudentResourcesAPI.Models
         public GradeStatus TheoricalGradeStatus { get; set; }
         public GradeStatus PraticalGradeStatus { get; set; }
         public GradeStatus AssignmentGradeStatus { get; set; }
-        //public float Mark { get; set; }
-        //public GradeType GradeType { get; set; }
         public GradeStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public string CreatedBy { get; set; }
         public DateTime UpdatedAt { get; set; }
         public string UpdatedBy { get; set; }
-        public Account Account { get; set; }
-        public Subject Subject { get; set; }
-
         public Grade()
         {
             this.AssignmentGradeStatus = GradeStatus.Passed;

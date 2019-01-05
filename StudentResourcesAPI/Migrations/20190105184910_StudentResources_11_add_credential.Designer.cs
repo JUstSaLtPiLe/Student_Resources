@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StudentResourcesAPI.Data;
 
 namespace StudentResourcesAPI.Migrations
 {
     [DbContext(typeof(StudentResourcesContext))]
-    partial class StudentResourcesContextModelSnapshot : ModelSnapshot
+    [Migration("20190105184910_StudentResources_11_add_credential")]
+    partial class StudentResources_11_add_credential
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -81,28 +83,6 @@ namespace StudentResourcesAPI.Migrations
                     b.HasIndex("SubjectId");
 
                     b.ToTable("ClazzSubject");
-                });
-
-            modelBuilder.Entity("StudentResourcesAPI.Models.Credential", b =>
-                {
-                    b.Property<string>("AccessToken")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<DateTime>("CreatedAt");
-
-                    b.Property<DateTime>("ExpiredAt");
-
-                    b.Property<long>("OwnerId");
-
-                    b.Property<string>("RefreshToken");
-
-                    b.Property<int>("Status");
-
-                    b.Property<DateTime>("UpdatedAt");
-
-                    b.HasKey("AccessToken");
-
-                    b.ToTable("Credential");
                 });
 
             modelBuilder.Entity("StudentResourcesAPI.Models.GeneralInformation", b =>

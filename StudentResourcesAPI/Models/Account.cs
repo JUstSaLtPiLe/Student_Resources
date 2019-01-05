@@ -4,11 +4,13 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace StudentResourcesAPI.Models
 {
+    [DataContract]
     public class Account
     {
         public Account()
