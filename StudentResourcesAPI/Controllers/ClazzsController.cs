@@ -22,7 +22,7 @@ namespace StudentResourcesAPI.Controllers
         // GET: Clazzs
         public IActionResult Index([FromHeader] string Authorization)
         {
-            if (CheckPermission(Authorization))
+            if (CheckToken(Authorization) == true)
             {
                 var clazzs = _context.Clazz.ToList();
                 return new JsonResult(clazzs);
@@ -30,33 +30,26 @@ namespace StudentResourcesAPI.Controllers
             return Unauthorized();
         }
 
-        // GET: Clazzs/Details/5
-        public IActionResult Details(int? id)
+        public IActionResult Details([FromHeader] string Authorization, [FromHeader] string Role, [FromBody] int clazzId)
         {
-            if (id == null)
+            if (CheckToken(Authorization) == true)
             {
-                return NotFound();
+                var clazzSubject = _context.ClazzSubject
+                     .Where(cs => cs.ClazzId == clazzId)
+                     .Include(cs => cs.Subject)
+                     .ToList();
+                var studentClazz = _context.StudentClazz
+                    .Where(sc => sc.ClazzId == clazzId)
+                    .Include(sc => sc.Account)
+                    .ThenInclude(a => a.GeneralInformation)
+                    .Include(sc => sc.Account)
+                    .ThenInclude(a => a.RoleAccounts)
+                    .ThenInclude(ra => ra.Role)
+                    .ToList();
+                var result = new { studentClazz, clazzSubject };
+                return new JsonResult(result);
             }
-            var ListStudentClazz = _context.StudentClazz
-                .Where(sc => sc.ClazzId == id)
-                .Include(sc => sc.Account)
-                .ThenInclude(a => a.GeneralInformation)
-                .ToList();
-            var subjects = _context.Subject.ToList();
-            var grades = _context.Grade.ToList();
-            if (ListStudentClazz == null)
-            {
-                return NotFound();
-            }
-            ViewData["subjects"] = subjects;
-            ViewData["grades"] = grades;
-            return View(ListStudentClazz);
-        }
-
-        // GET: Clazzs/Create
-        public IActionResult Create()
-        {
-            return View();
+            return Unauthorized();
         }
 
         // POST: Clazzs/Create
@@ -72,22 +65,6 @@ namespace StudentResourcesAPI.Controllers
                 return Ok();
             }
             return Unauthorized();
-        }
-
-        // GET: Clazzs/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var clazz = await _context.Clazz.FindAsync(id);
-            if (clazz == null)
-            {
-                return NotFound();
-            }
-            return View(clazz);
         }
 
         // POST: Clazzs/Edit/5
@@ -160,47 +137,53 @@ namespace StudentResourcesAPI.Controllers
             return _context.Clazz.Any(e => e.ClazzId == id);
         }
 
-        public IActionResult AddStudents(int? id)
+        [HttpPost]
+        public IActionResult AddStudents([FromHeader] string Authorization, [FromHeader] string Role, [FromBody] int[] studentIds)
         {
-            if (id == null)
+            if (CheckToken(Authorization) == true && CheckPermission(Role) == true)
             {
-                return NotFound();
+                var clazzId = studentIds.Last();
+                var clazz = _context.Clazz.Find(clazzId);
+                for (var i = 0; i < studentIds.Count() - 1; i++)
+                {
+                    var existedStudenClazz = _context.StudentClazz.Find(studentIds[i], clazzId);
+                    if (existedStudenClazz != null)
+                    {
+                        continue;
+                    }
+                    var student = _context.Account.Find(studentIds[i]);
+                    StudentClazz studentClazz = new StudentClazz
+                    {
+                        Account = student,
+                        Clazz = clazz
+                    };
+                    _context.Add(studentClazz);
+                }
+                _context.SaveChanges();
+                return new JsonResult(studentIds);
             }
-
-            var clazz = _context.Clazz.Find(id);
-            if (clazz == null)
-            {
-                return NotFound();
-            }
-            var students = _context.Account
-                .Where(a => a.RoleAccounts.Any(ra => ra.RoleId == 2))
-                .Include(a => a.GeneralInformation)
-                .ToList();
-            ViewData["students"] = students;
-            return View(clazz);
+            return Unauthorized();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> SaveStudents(int? clazzId, int[] accountIds)
+        public IActionResult AddSubjects([FromHeader] string Authorization, [FromHeader] string Role, [FromBody] int[] subjectIds)
         {
-            var clazz = _context.Clazz.Find(clazzId);
-            foreach (var id in accountIds)
+            if(CheckToken(Authorization) == true && CheckPermission(Role) == true)
             {
-                var existedStudenClazz = _context.StudentClazz.Find(id, clazzId);
-                if(existedStudenClazz != null)
+                var clazzId = subjectIds.Last();
+                var clazz = _context.Clazz.Find(clazzId);
+                for(var i = 0; i < subjectIds.Count() - 1; i++)
                 {
-                    continue;
+                    var subject = _context.Subject.Find(subjectIds[i]);
+                    ClazzSubject clazzSubject = new ClazzSubject {
+                        Clazz = clazz,
+                        Subject = subject
+                    };
+                    _context.Add(clazzSubject);
                 }
-                var student = _context.Account.Find(id);
-                StudentClazz studentClazz = new StudentClazz
-                {
-                    Clazz = clazz,
-                    Account = student
-                };
-                _context.Add(studentClazz);
+                _context.SaveChanges();
+                return new JsonResult(subjectIds);
             }
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return Unauthorized();
         }
 
         public bool CheckToken(string accessToken)

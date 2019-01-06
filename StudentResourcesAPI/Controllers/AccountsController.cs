@@ -24,14 +24,26 @@ namespace StudentResourcesAPI.Controllers
         }
 
         // GET: Accounts
-        public async Task<IActionResult> Index()
+        public IActionResult Index([FromHeader] string Authorization)
         {
-            var accounts = _context.Account
-                .Include(a => a.GeneralInformation)
-                .Include(a => a.RoleAccounts)
-                .ThenInclude(ra => ra.Role)
+            if(CheckToken(Authorization) == true)
+            {
+                var employeeAccounts = _context.RoleAccount
+                .Where(ra => ra.RoleId == 1)
+                .Include(ra => ra.Account)
+                .ThenInclude(a => a.GeneralInformation)
+                .Include(ra => ra.Role)
                 .ToList();
-            return View(accounts);
+                var studentAccounts = _context.RoleAccount
+                .Where(ra => ra.RoleId == 2)
+                .Include(ra => ra.Account)
+                .ThenInclude(a => a.GeneralInformation)
+                .Include(ra => ra.Role)
+                .ToList();
+                var result = new { employeeAccounts, studentAccounts };
+                return new JsonResult(result);
+            }
+            return Unauthorized();
         }
 
         // GET: Accounts/Details/5
@@ -58,43 +70,50 @@ namespace StudentResourcesAPI.Controllers
         }
 
         // GET: Accounts/Create
-        public IActionResult Create()
+        public IActionResult Create([FromHeader] string Authorization, [FromHeader] string Role)
         {
-            var roles = _context.Role.ToList();
-            ViewData["roles"] = roles;
-            return View();
+            if (CheckToken(Authorization) == true && CheckPermission(Role) == true)
+            {
+                var roles = _context.Role.ToList();
+                return new JsonResult(roles);
+            }
+            return Unauthorized();
         }
 
         // POST: Accounts/Create
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("GeneralInformation")] Account account, int[] roleIds)
+        public IActionResult Create([FromBody] GeneralInfoWithRoles generalInfoWithRoles, [FromHeader] string Authorization, [FromHeader] string Role)
         {
-            if (ModelState.IsValid)
+            if (CheckToken(Authorization) == true && CheckPermission(Role) == true)
             {
-                foreach (var id in roleIds)
+                if (ModelState.IsValid)
                 {
-                    var role = _context.Role.Find(id);
-                    RoleAccount roleAccount = new RoleAccount
+                    Account account = new Account();
+                    account.GeneralInformation = generalInfoWithRoles.GeneralInformation;
+                    foreach (var id in generalInfoWithRoles.RoleIds)
                     {
-                        Role = role,
-                        Account = account
-                    };
-                    _context.Add(roleAccount);
+                        var role = _context.Role.Find(id);
+                        RoleAccount roleAccount = new RoleAccount
+                        {
+                            Role = role,
+                            Account = account
+                        };
+                        _context.Add(roleAccount);
+                    }
+                    _context.Add(account);
+                    _context.Add(account.GeneralInformation);
+                    _context.SaveChanges();
+                    account.RollNumber = "B19APTECH" + account.AccountId.ToString("D4");
+                    account.Password = account.GeneralInformation.Dob.ToString();
+                    account.EncryptPassword(account.Password);
+                    _context.Update(account);
+                    _context.SaveChanges();
                 }
-                _context.Add(account);
-                _context.Add(account.GeneralInformation);
-                await _context.SaveChangesAsync();
-                account.RollNumber = "B19APTECH" + account.AccountId.ToString("D4");
-                account.Password = account.GeneralInformation.Dob.ToString();
-                account.EncryptPassword(account.Password);
-                _context.Update(account);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return new JsonResult(generalInfoWithRoles);
             }
-            return View(account);
+            return Unauthorized();
         }
 
         // GET: Accounts/Edit/5
@@ -228,28 +247,32 @@ namespace StudentResourcesAPI.Controllers
         }
 
         [HttpPost]
-        public IActionResult AddGrades([FromBody]IEnumerable<Grade> grades)
+        public IActionResult AddGrades([FromBody]IEnumerable<Grade> grades, [FromHeader] string Authorization, [FromHeader] string Role)
         {
-            foreach (var grade in grades)
+            if(CheckToken(Authorization) == true && CheckPermission(Role) == true)
             {
-                grade.AccountId = grade.AccountId;
-                grade.SubjectId = grade.SubjectId;
-                if (grade.TheoricalGrade < 5)
+                foreach (var grade in grades)
                 {
-                    grade.TheoricalGradeStatus = GradeStatus.Failed;
+                    grade.AccountId = grade.AccountId;
+                    grade.SubjectId = grade.SubjectId;
+                    if (grade.TheoricalGrade < 5)
+                    {
+                        grade.TheoricalGradeStatus = GradeStatus.Failed;
+                    }
+                    if (grade.AssignmentGrade < 5)
+                    {
+                        grade.AssignmentGradeStatus = GradeStatus.Failed;
+                    }
+                    if (grade.PraticalGrade < 5)
+                    {
+                        grade.PraticalGradeStatus = GradeStatus.Failed;
+                    }
+                    _context.Add(grade);
                 }
-                if (grade.AssignmentGrade < 5)
-                {
-                    grade.AssignmentGradeStatus = GradeStatus.Failed;
-                }
-                if (grade.PraticalGrade < 5)
-                {
-                    grade.PraticalGradeStatus = GradeStatus.Failed;
-                }
-                _context.Add(grade);
+                _context.SaveChanges();
+                return Ok();
             }
-            _context.SaveChanges();
-            return Ok();
+            return Unauthorized();
         }
 
         public IActionResult Login()
@@ -294,6 +317,25 @@ namespace StudentResourcesAPI.Controllers
                 }
             }
             return NoContent();
+        }
+
+        public bool CheckToken(string accessToken)
+        {
+            var credential = _context.Credential.SingleOrDefault(t => t.AccessToken == accessToken);
+            if (credential != null && credential.IsValid())
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public bool CheckPermission(string role)
+        {
+            if (role.Split("#").Contains("Employee"))
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

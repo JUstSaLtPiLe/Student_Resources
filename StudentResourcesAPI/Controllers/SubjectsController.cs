@@ -20,9 +20,14 @@ namespace StudentResourcesAPI.Controllers
         }
 
         // GET: Subjects
-        public async Task<IActionResult> Index()
+        public IActionResult Index([FromHeader] string Authorization, [FromHeader] string Role)
         {
-            return View(await _context.Subject.ToListAsync());
+            if (CheckToken(Authorization) == true)
+            {
+                var subjects = _context.Subject.ToList();
+                return new JsonResult(subjects);
+            }
+            return Unauthorized();
         }
 
         // GET: Subjects/Details/5
@@ -43,26 +48,19 @@ namespace StudentResourcesAPI.Controllers
             return View(subject);
         }
 
-        // GET: Subjects/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
         // POST: Subjects/Create
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("SubjectId,Name")] Subject subject)
+        public IActionResult Create([FromBody]Subject subject, [FromHeader] string Authorization, [FromHeader] string Role)
         {
-            if (ModelState.IsValid)
+            if(CheckToken(Authorization) == true && CheckPermission(Role))
             {
                 _context.Add(subject);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                _context.SaveChanges();
+                return Ok();
             }
-            return View(subject);
+            return Unauthorized();
         }
 
         // GET: Subjects/Edit/5
@@ -148,6 +146,25 @@ namespace StudentResourcesAPI.Controllers
         private bool SubjectExists(int id)
         {
             return _context.Subject.Any(e => e.SubjectId == id);
+        }
+
+        public bool CheckToken(string accessToken)
+        {
+            var credential = _context.Credential.SingleOrDefault(t => t.AccessToken == accessToken);
+            if (credential != null && credential.IsValid())
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public bool CheckPermission(string role)
+        {
+            if (role.Split("#").Contains("Employee"))
+            {
+                return true;
+            }
+            return false;
         }
     }
 }

@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 
 namespace StudentResourcesAPI.Models
 {
-    [DataContract]
     public class Account
     {
         public Account()
