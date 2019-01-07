@@ -192,6 +192,59 @@ namespace StudentResourcesAPI.Controllers
             return Unauthorized();
         }
 
+        public IActionResult StudentDetails([FromHeader] string Authorization, [FromHeader] string Role, [FromBody] int studentId)
+        {
+            if (CheckToken(Authorization) == true)
+            {
+                var student = _context.Account
+                     .Where(a => a.AccountId == studentId)
+                     .Include(a => a.GeneralInformation)
+                     .Include(a => a.RoleAccounts)
+                     .ToList();
+                return new JsonResult(student);
+            }
+            return Unauthorized();
+        }
+
+        public IActionResult EditAccount([FromBody] GeneralInformationWithRoles generalInfoWithRoles, [FromHeader] string Authorization)
+        {
+            if (CheckToken(Authorization) == true)
+            {
+                var account = _context.Account.Find(generalInfoWithRoles.AccountId);
+                var generalInfo = _context.GeneralInformation.Find(generalInfoWithRoles.AccountId);
+                account.RollNumber = "B19APTECH" + account.AccountId.ToString("D4");
+                generalInfo.Phone = generalInfoWithRoles.GeneralInformation.Phone;
+                generalInfo.Address = generalInfoWithRoles.GeneralInformation.Address;
+                generalInfo.Email = generalInfoWithRoles.GeneralInformation.Email;
+                if (generalInfoWithRoles.Password != null)
+                {
+                    account.EncryptPassword(generalInfoWithRoles.Password);
+                }
+                if (generalInfoWithRoles.RoleIds != null)
+                {
+                    var OldRoleAccount = _context.RoleAccount.Where(ora => ora.AccountId == generalInfoWithRoles.AccountId);
+                    _context.RoleAccount.RemoveRange(OldRoleAccount);
+                }
+                foreach (var roleId in generalInfoWithRoles.RoleIds)
+                {
+                    var role = _context.Role.Find(roleId);
+                    RoleAccount roleAccount = new RoleAccount
+                    {
+                        Role = role,
+                        Account = account
+                    };
+                    _context.RoleAccount.Add(roleAccount);
+                }
+                _context.Account.Update(account);
+                _context.GeneralInformation.Update(generalInfo);
+                _context.SaveChanges();
+                return new JsonResult(generalInfoWithRoles);
+            }
+            return Unauthorized();
+        }
+
+
+
         public IActionResult AddSubjects([FromHeader] string Authorization, [FromHeader] string Role, [FromBody] int[] subjectIds)
         {
             if (CheckToken(Authorization) == true && CheckPermission(Role) == true)
@@ -203,10 +256,8 @@ namespace StudentResourcesAPI.Controllers
                     var existedClazzSubject = _context.ClazzSubject.Find(clazzId, subjectIds[i]);
                     if(existedClazzSubject != null)
                     {
-                        existedClazzSubject.Status = ClazzSubjectStatus.Active;
+                        continue;
                     }
-                    else
-                    {
                         var subject = _context.Subject.Find(subjectIds[i]);
                         ClazzSubject clazzSubject = new ClazzSubject
                         {
@@ -214,7 +265,6 @@ namespace StudentResourcesAPI.Controllers
                             Subject = subject
                         };
                         _context.Add(clazzSubject);
-                    }
                 }
                 _context.SaveChanges();
                 return new JsonResult(subjectIds);
@@ -230,26 +280,18 @@ namespace StudentResourcesAPI.Controllers
                 var clazz = _context.Clazz.Find(clazzId);
                 for (var i = 0; i < studentIds.Count() - 1; i++)
                 {
-                    var existedStudentClazz = _context.StudentClazz.Find(clazzId, studentIds[i]);
-                    if (existedStudentClazz != null && existedStudentClazz.Status == StudentClazzStatus.Deactive)
+                    var existedStudentClazz = _context.StudentClazz.Find(studentIds[i], clazzId);
+                    if (existedStudentClazz != null)
                     {
-                        existedStudentClazz.Status = StudentClazzStatus.Active;
+                        continue;
                     }
-                    else
-                    {
-                        var existedStudenClazz = _context.StudentClazz.Find(studentIds[i], clazzId);
-                        if (existedStudenClazz != null)
-                        {
-                            continue;
-                        }
                         var student = _context.Account.Find(studentIds[i]);
                         StudentClazz studentClazz = new StudentClazz
                         {
                             Account = student,
                             Clazz = clazz
                         };
-                        _context.Add(studentClazz);
-                    }
+                        _context.Add(studentClazz); 
                 }
                 _context.SaveChanges();
                 return new JsonResult(studentIds);
@@ -263,6 +305,11 @@ namespace StudentResourcesAPI.Controllers
             {
                 foreach (var grade in grades)
                 {
+                    var existedGrade = _context.Grade.Find(grade.AccountId, grade.SubjectId);
+                    if(existedGrade != null)
+                    {
+                        continue;
+                    }
                     grade.AccountId = grade.AccountId;
                     grade.SubjectId = grade.SubjectId;
                     if (grade.TheoricalGrade < 5)
@@ -298,20 +345,17 @@ namespace StudentResourcesAPI.Controllers
                     {
                         foreach(var studentClazz in studentClazzs)
                         {
-                            studentClazz.Status = StudentClazzStatus.Deactive;
-                            _context.StudentClazz.Update(studentClazz);
+                            _context.StudentClazz.Remove(studentClazz);
                         }
                     }
                     if (clazzSubjects != null)
                     {
                         foreach (var clazzSubject in clazzSubjects)
                         {
-                            clazzSubject.Status = ClazzSubjectStatus.Deactive;
-                            _context.ClazzSubject.Update(clazzSubject);
+                            _context.ClazzSubject.Remove(clazzSubject);
                         }
                     }
-                    clazz.Status = ClazzStatus.Deactive;
-                    _context.Clazz.Update(clazz);
+                    _context.Clazz.Remove(clazz);
                     _context.SaveChanges();
                     return Ok();
                 }
@@ -327,8 +371,7 @@ namespace StudentResourcesAPI.Controllers
                 var studentClazzs = _context.StudentClazz.Find(studentClazz.AccountId , studentClazz.ClazzId);
                 if (studentClazzs != null)
                 {
-                    studentClazzs.Status = StudentClazzStatus.Deactive;
-                    _context.Update(studentClazzs);
+                    _context.Remove(studentClazzs);
                     _context.SaveChanges();
                     return Ok();
                 }
@@ -344,8 +387,7 @@ namespace StudentResourcesAPI.Controllers
                 var clazzSubjects = _context.ClazzSubject.Find(clazzSubject.ClazzId, clazzSubject.SubjectId);
                 if (clazzSubjects != null)
                 {
-                    clazzSubjects.Status = ClazzSubjectStatus.Deactive;
-                    _context.Update(clazzSubjects);
+                    _context.Remove(clazzSubjects);
                     _context.SaveChanges();
                     return Ok();
                 }
@@ -366,12 +408,10 @@ namespace StudentResourcesAPI.Controllers
                     {
                         foreach (var clazzSubject in clazzSubjects)
                         {
-                            clazzSubject.Status = ClazzSubjectStatus.Deactive;
-                            _context.ClazzSubject.Update(clazzSubject);
+                            _context.ClazzSubject.Remove(clazzSubject);
                         }
                     }
-                    subject.Status = SubjectStatus.Deactive;
-                    _context.Subject.Update(subject);
+                    _context.Subject.Remove(subject);
                     _context.SaveChanges();
                     return Ok();
                 }
@@ -387,28 +427,61 @@ namespace StudentResourcesAPI.Controllers
                 var account = _context.Account.Find(accountId);
                 var roleAccounts = _context.RoleAccount.Where(ra => ra.AccountId == accountId);
                 var studentClazzs = _context.StudentClazz.Where(sc => sc.AccountId == accountId);
+                var grades = _context.Grade.Where(sc => sc.AccountId == accountId);
                 if (account != null)
                 {
                     if (roleAccounts != null)
                     {
                         foreach (var roleAccount in roleAccounts)
                         {
-                            roleAccount.Status = RoleAccountStatus.Deactive;
-                            _context.RoleAccount.Update(roleAccount);
+                            _context.RoleAccount.Remove(roleAccount);
                         }
                     }
-                    if (roleAccounts != null)
+                    if (studentClazzs != null)
                     {
                         foreach (var studentClazz in studentClazzs)
                         {
-                            studentClazz.Status = StudentClazzStatus.Deactive;
-                            _context.StudentClazz.Update(studentClazz);
+                            _context.StudentClazz.Remove(studentClazz);
                         }
                     }
-                    account.Status = AccountStatus.Deactive;
-                    _context.Account.Update(account);
+                    if (grades != null)
+                    {
+                        foreach (var grade in grades)
+                        {
+                            _context.Grade.Remove(grade);
+                        }
+                    }
+                    _context.Account.Remove(account);
                     _context.SaveChanges();
                     return Ok();
+                }
+                return NoContent();
+            }
+            return Unauthorized();
+        }
+
+        public IActionResult GetStudenClazzs([FromHeader] string Authorization, [FromHeader] string Role, [FromBody] int studentId)
+        {
+            if(CheckToken(Authorization) == true)
+            {
+                var studentClazzs = _context.StudentClazz
+                    .Where(sc => sc.AccountId == studentId)
+                    .Include(sc => sc.Clazz)
+                    .ToList();
+                return new JsonResult(studentClazzs);
+            }
+            return Unauthorized();
+        }
+
+        public IActionResult GetStudenGrades([FromHeader] string Authorization, [FromHeader] string Role, [FromBody] int[] studentIds)
+        {
+            if (CheckToken(Authorization) == true)
+            {
+                var studentId = studentIds.Last();
+                var grade = _context.Grade.Find(studentId, studentIds[0]);
+                if(grade != null)
+                {
+                    return new JsonResult(grade);
                 }
                 return NoContent();
             }
