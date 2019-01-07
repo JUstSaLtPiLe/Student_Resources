@@ -33,8 +33,18 @@ namespace StudentResourcesAPI
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll",
+                    builder => builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
+            });
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+
+            services.AddMvc()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .AddJsonOptions(
+            options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+        );
             services.AddDbContext<StudentResourcesContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("StudentResourcesDb")));
         }
@@ -55,6 +65,7 @@ namespace StudentResourcesAPI
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCookiePolicy();
+            app.UseCors("AllowAll");
             app.UseMvc(routes =>
             {
                 routes.MapRoute(
