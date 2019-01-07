@@ -9,5 +9,8 @@ namespace StudentResourcesAPI.Models
     {
         public GeneralInformation GeneralInformation { get; set; }
         public int[] RoleIds { get; set; }
+        public int AccountId { get; set; }
+        public string Password { get; set; }
+        public AccountStatus Status { get; set; }
     }
 }
