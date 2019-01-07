@@ -112,7 +112,7 @@ namespace StudentResourcesAPI.Controllers
             return Unauthorized();
         }
 
-        public IActionResult CreateAccount([FromBody] GeneralInfoWithRoles generalInfoWithRoles, [FromHeader] string Authorization, [FromHeader] string Role)
+        public IActionResult CreateAccount([FromBody] GeneralInformationWithRoles generalInfoWithRoles, [FromHeader] string Authorization, [FromHeader] string Role)
         {
             if (CheckToken(Authorization) == true && CheckPermission(Role) == true)
             {
