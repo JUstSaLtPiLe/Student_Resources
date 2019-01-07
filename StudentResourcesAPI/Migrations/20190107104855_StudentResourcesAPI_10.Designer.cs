@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StudentResourcesAPI.Data;
 
 namespace StudentResourcesAPI.Migrations
 {
     [DbContext(typeof(StudentResourcesContext))]
-    partial class StudentResourcesContextModelSnapshot : ModelSnapshot
+    [Migration("20190107104855_StudentResourcesAPI_10")]
+    partial class StudentResourcesAPI_10
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -221,8 +223,6 @@ namespace StudentResourcesAPI.Migrations
                     b.Property<int?>("AccountId");
 
                     b.Property<string>("Name");
-
-                    b.Property<int>("Status");
 
                     b.HasKey("SubjectId");
 
