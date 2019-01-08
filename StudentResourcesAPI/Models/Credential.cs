@@ -18,8 +18,8 @@ namespace StudentResourcesAPI.Models
             this.AccessToken = Guid.NewGuid().ToString();
             this.RefreshToken = Guid.NewGuid().ToString(); ;
             this.OwnerId = OwnerId;
-            this.CreatedAt = DateTime.Now;
-            this.UpdatedAt = DateTime.Now;
+            this.CreatedAt = DateTime.Today;
+            this.UpdatedAt = DateTime.Today;
             this.Status = CredentialStatus.Active;
             this.ExpiredAt = DateTime.Now.AddDays(7);
         }
