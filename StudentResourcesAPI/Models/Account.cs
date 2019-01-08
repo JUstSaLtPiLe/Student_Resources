@@ -13,8 +13,8 @@ namespace StudentResourcesAPI.Models
     {
         public Account()
         {
-            this.CreatedAt = DateTime.Now;
-            this.UpdatedAt = DateTime.Now;
+            this.CreatedAt = DateTime.Today;
+            this.UpdatedAt = DateTime.Today;
             this.Status = AccountStatus.Active;
             this.Salt = new byte[128 / 8];
             this.Password = "a";

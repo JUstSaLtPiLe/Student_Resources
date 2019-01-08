@@ -141,8 +141,9 @@ namespace StudentResourcesAPI.Controllers
                     account.EncryptPassword(account.Password);
                     _context.Update(account);
                     _context.SaveChanges();
+                    return new JsonResult(account.GeneralInformation.Dob.ToString("ddMMyy"));
                 }
-                return new JsonResult(generalInfoWithRoles);
+                //return new JsonResult(generalInfoWithRoles);
             }
             return Unauthorized();
         }
@@ -186,7 +187,8 @@ namespace StudentResourcesAPI.Controllers
                     .ThenInclude(a => a.RoleAccounts)
                     .ThenInclude(ra => ra.Role)
                     .ToList();
-                var result = new { studentClazz, clazzSubject };
+                var clazz = _context.Clazz.Find(clazzId);
+                var result = new { studentClazz, clazzSubject ,clazz };
                 return new JsonResult(result);
             }
             return Unauthorized();
@@ -216,6 +218,7 @@ namespace StudentResourcesAPI.Controllers
                 generalInfo.Phone = generalInfoWithRoles.GeneralInformation.Phone;
                 generalInfo.Address = generalInfoWithRoles.GeneralInformation.Address;
                 generalInfo.Email = generalInfoWithRoles.GeneralInformation.Email;
+                account.UpdatedAt = DateTime.Today;
                 if (generalInfoWithRoles.Password != null)
                 {
                     account.EncryptPassword(generalInfoWithRoles.Password);
@@ -239,6 +242,26 @@ namespace StudentResourcesAPI.Controllers
                 _context.GeneralInformation.Update(generalInfo);
                 _context.SaveChanges();
                 return new JsonResult(generalInfoWithRoles);
+            }
+            return Unauthorized();
+        }
+
+        public IActionResult EditClazz([FromBody] Clazz clazz, [FromHeader] string Authorization, [FromHeader] string Role)
+        {
+            if (CheckToken(Authorization) == true && CheckPermission(Role))
+            {
+                var existedClazz = _context.Clazz.Find(clazz.ClazzId);
+                if(existedClazz != null)
+                {
+                    existedClazz.Name = clazz.Name;
+                    existedClazz.Teacher = clazz.Teacher;
+                    existedClazz.Status = clazz.Status;
+                    existedClazz.UpdateAt = DateTime.Today;
+                    _context.Update(existedClazz);
+                    _context.SaveChanges();
+                    return Ok();
+                }
+                return NoContent();
             }
             return Unauthorized();
         }
@@ -484,6 +507,43 @@ namespace StudentResourcesAPI.Controllers
                     return new JsonResult(grade);
                 }
                 return NoContent();
+            }
+            return Unauthorized();
+        }
+
+        public IActionResult EditGrades([FromHeader] string Authorization, [FromHeader] string Role, [FromBody]IEnumerable<Grade> grades)
+        {
+            if (CheckToken(Authorization) == true && CheckPermission(Role) == true)
+            {
+                foreach (var grade in grades)
+                {
+                    var existedGrade = _context.Grade.Find(grade.AccountId, grade.SubjectId);
+                    if (existedGrade == null)
+                    {
+                        return NoContent();
+                    }
+                    existedGrade.AccountId = grade.AccountId;
+                    existedGrade.SubjectId = grade.SubjectId;
+                    existedGrade.AssignmentGrade = grade.AssignmentGrade;
+                    existedGrade.PraticalGrade = grade.PraticalGrade;
+                    existedGrade.TheoricalGrade = grade.TheoricalGrade;
+                    existedGrade.UpdatedAt = DateTime.Today;
+                    if (existedGrade.TheoricalGrade < 5)
+                    {
+                        existedGrade.TheoricalGradeStatus = GradeStatus.Failed;
+                    }
+                    if (existedGrade.AssignmentGrade < 5)
+                    {
+                        existedGrade.AssignmentGradeStatus = GradeStatus.Failed;
+                    }
+                    if (existedGrade.PraticalGrade < 5)
+                    {
+                        existedGrade.PraticalGradeStatus = GradeStatus.Failed;
+                    }
+                    _context.Update(existedGrade);
+                }
+                _context.SaveChanges();
+                return Ok();
             }
             return Unauthorized();
         }
