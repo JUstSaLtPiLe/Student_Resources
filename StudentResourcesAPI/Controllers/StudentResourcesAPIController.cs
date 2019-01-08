@@ -137,7 +137,7 @@ namespace StudentResourcesAPI.Controllers
                     _context.Add(account.GeneralInformation);
                     _context.SaveChanges();
                     account.RollNumber = "B19APTECH" + account.AccountId.ToString("D4");
-                    account.Password = account.GeneralInformation.Dob.ToString();
+                    account.Password = account.GeneralInformation.Dob.ToString("ddMMyy");
                     account.EncryptPassword(account.Password);
                     _context.Update(account);
                     _context.SaveChanges();
